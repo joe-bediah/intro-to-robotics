@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A structured robotics learning plan to go from beginner hardware basics to building an expressive companion robot.">
 <title>Robotics Learning Plan</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -136,6 +137,7 @@
   }
 
   .phase-header {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -143,9 +145,19 @@
     cursor: pointer;
     user-select: none;
     transition: background 0.15s;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    color: inherit;
+    font: inherit;
   }
 
   .phase-header:hover { background: var(--surface2); }
+
+  .phase-header:focus-visible {
+    outline: 2px solid rgba(0,229,255,0.35);
+    outline-offset: -2px;
+  }
 
   .phase-num {
     font-family: 'Space Mono', monospace;
@@ -204,6 +216,7 @@
   .task-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
   .task {
+    width: 100%;
     display: flex;
     align-items: flex-start;
     gap: 0.85rem;
@@ -213,9 +226,17 @@
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.15s;
+    text-align: left;
+    font: inherit;
+    color: inherit;
   }
 
   .task:hover { border-color: var(--border); }
+
+  .task:focus-visible {
+    outline: 2px solid rgba(0,229,255,0.35);
+    outline-offset: 2px;
+  }
 
   .task.done {
     background: rgba(34,197,94,0.05);
@@ -384,6 +405,13 @@
   }
 
   .reset-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -398,7 +426,7 @@
 
   <div class="progress-bar-wrap">
     <span class="progress-label">OVERALL PROGRESS</span>
-    <div class="progress-track">
+    <div class="progress-track" role="progressbar" aria-label="Overall progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-fill" id="progressFill" style="width:0%"></div>
     </div>
     <span class="progress-pct" id="progressPct">0%</span>
@@ -406,7 +434,7 @@
 
   <div id="phases"></div>
 
-  <button class="reset-btn" onclick="resetAll()">↺ Reset all progress</button>
+  <button class="reset-btn" id="resetBtn" type="button" aria-label="Reset all progress">↺ Reset all progress</button>
 
 </div>
 
@@ -436,7 +464,7 @@ const data = [
       { id: "t1", title: "Set up Raspberry Pi 5 headless", sub: "Install Raspberry Pi OS, enable SSH, connect from your laptop. No monitor needed.", tag: "hw" },
       { id: "t2", title: "Blink an LED with Python", sub: "Classic first milestone. Means your Pi runs, GPIO works, and you've closed the software → physical loop.", tag: "hw" },
       { id: "t3", title: "Learn breadboarding basics", sub: "Watch Paul McWhorter's Raspberry Pi GPIO series on YouTube. Best free resource for this.", tag: "hw" },
-      { id: "t4", title: "Wire up an HC-SR04 distance sensor", sub: "Read a distance value in Python. Understand I2C/GPIO protocols at a basic level.", tag: "hw" },
+      { id: "t4", title: "Wire up an HC-SR04 distance sensor", sub: "Read a distance value in Python. Use a voltage divider/level shifter for the 5V echo pin (Pi GPIO is 3.3V).", tag: "hw" },
       { id: "t5", title: "Control a servo motor with PWM", sub: "Move a servo to specific angles via Python. This is the atomic unit of all robot movement.", tag: "hw" },
       { id: "t6", title: "Add a small speaker + audio output", sub: "Play a sound file from Python. Use pygame or simpleaudio. Confirms your audio pipeline.", tag: "sw" },
     ],
@@ -469,7 +497,7 @@ const data = [
       { id: "t14", title: "Build a face expression library", sub: "Create 5–8 SVG or bitmap faces: happy, curious, sleepy, surprised, thinking. Animate between them.", tag: "sw" },
       { id: "t15", title: "Trigger expressions from sensor input", sub: "Distance sensor → face changes when Charlie approaches. This moment will be magic for him.", tag: "sw" },
       { id: "t16", title: "Add a USB microphone", sub: "Capture audio in Python. Test with basic voice activity detection (VAD) so it knows when someone is talking.", tag: "hw" },
-      { id: "t17", title: "Connect to a voice/LLM API", sub: "OpenAI Realtime API or Whisper + GPT-4o-mini. Give it a simple personality prompt tuned for a 4-year-old.", tag: "sw" },
+      { id: "t17", title: "Connect to a voice/LLM API", sub: "Pick a speech-to-text + conversational API stack (or run locally). Give it a simple personality prompt tuned for a 4-year-old.", tag: "sw" },
       { id: "t18", title: "Sync face to speech output", sub: "Animate mouth while it talks. Simple talking face loop — doesn't need to be perfect to be charming.", tag: "sw" },
     ],
     milestone: "🤖 Milestone: Charlie says 'hi' → robot's face lights up and responds by name"
@@ -530,6 +558,8 @@ function updateProgress() {
   const pct = ids.length ? Math.round((count / ids.length) * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
+  const track = document.querySelector('.progress-track');
+  if (track) track.setAttribute('aria-valuenow', String(pct));
 }
 
 function tagHTML(tag) {
@@ -545,6 +575,7 @@ function renderPhases() {
     const el = document.createElement('div');
     el.className = 'phase' + (phase.kit ? ' kit-phase' : '');
     el.id = phase.id;
+    const bodyId = `${phase.id}-body`;
 
     let bodyHTML = `<p class="phase-desc">${phase.desc}</p>`;
 
@@ -558,8 +589,8 @@ function renderPhases() {
             <div class="kit-desc">${k.desc}</div>
             <div class="kit-teaches">${k.teaches}</div>
             <div class="kit-links">
-              <a class="kit-link buy" href="${k.buyUrl}" target="_blank" rel="noopener">Buy →</a>
-              <a class="kit-link docs" href="${k.docsUrl}" target="_blank" rel="noopener">Docs / Learn →</a>
+              <a class="kit-link buy" href="${k.buyUrl}" target="_blank" rel="noopener noreferrer">Buy →</a>
+              <a class="kit-link docs" href="${k.docsUrl}" target="_blank" rel="noopener noreferrer">Docs / Learn →</a>
             </div>
           </div>`;
       });
@@ -571,14 +602,14 @@ function renderPhases() {
       phase.tasks.forEach(t => {
         const isDone = !!done[t.id];
         bodyHTML += `
-          <div class="task ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="toggleTask('${t.id}')">
+          <button type="button" class="task ${isDone ? 'done' : ''}" data-action="toggle-task" data-id="${t.id}" aria-pressed="${isDone ? 'true' : 'false'}">
             <div class="task-check">${isDone ? '✓' : ''}</div>
             <div class="task-content">
               <div class="task-title">${t.title}</div>
               <div class="task-sub">${t.sub}</div>
             </div>
             ${tagHTML(t.tag)}
-          </div>`;
+          </button>`;
       });
       bodyHTML += `</div>`;
     }
@@ -588,13 +619,13 @@ function renderPhases() {
     }
 
     el.innerHTML = `
-      <div class="phase-header" onclick="togglePhase('${phase.id}')">
+      <button type="button" class="phase-header" data-action="toggle-phase" data-id="${phase.id}" aria-expanded="false" aria-controls="${bodyId}">
         <span class="phase-num">${phase.num}</span>
         <span class="phase-title">${phase.title}</span>
         <span class="phase-meta">${phase.duration}</span>
         <span class="phase-chevron">▶</span>
-      </div>
-      <div class="phase-body">${bodyHTML}</div>`;
+      </button>
+      <div class="phase-body" id="${bodyId}">${bodyHTML}</div>`;
 
     container.appendChild(el);
   });
@@ -604,7 +635,10 @@ function renderPhases() {
 
 function togglePhase(id) {
   const el = document.getElementById(id);
-  el.classList.toggle('open');
+  const isOpen = !el.classList.contains('open');
+  el.classList.toggle('open', isOpen);
+  const btn = el.querySelector('.phase-header');
+  if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 }
 
 function toggleTask(id) {
@@ -615,6 +649,7 @@ function toggleTask(id) {
   if (taskEl) {
     taskEl.classList.toggle('done', done[id]);
     taskEl.querySelector('.task-check').textContent = done[id] ? '✓' : '';
+    taskEl.setAttribute('aria-pressed', done[id] ? 'true' : 'false');
   }
   updateProgress();
 }
@@ -626,13 +661,28 @@ function resetAll() {
   document.querySelectorAll('.task').forEach(t => {
     t.classList.remove('done');
     t.querySelector('.task-check').textContent = '';
+    t.setAttribute('aria-pressed', 'false');
   });
   updateProgress();
 }
 
 renderPhases();
 // Open first phase by default
-document.getElementById(data[0].id).classList.add('open');
+togglePhase(data[0].id);
+
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+document.getElementById('phases').addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+
+  const action = target.getAttribute('data-action');
+  const id = target.getAttribute('data-id');
+  if (!id) return;
+
+  if (action === 'toggle-phase') togglePhase(id);
+  if (action === 'toggle-task') toggleTask(id);
+});
 </script>
 </body>
 </html>
