@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robotics Learning Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #141720;
+    --surface2: #1c2030;
+    --border: #2a2f42;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #22c55e;
+    --kit: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 300;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* Phase */
+  .phase {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.2s;
+  }
+
+  .phase.kit-phase {
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .phase-header:hover { background: var(--surface2); }
+
+  .phase-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  .kit-phase .phase-num {
+    color: var(--kit);
+    background: rgba(245,158,11,0.08);
+    border-color: rgba(245,158,11,0.25);
+  }
+
+  .phase-title {
+    flex: 1;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  .phase-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .phase-chevron {
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: transform 0.25s;
+  }
+
+  .phase.open .phase-chevron { transform: rotate(90deg); }
+
+  .phase-body {
+    display: none;
+    padding: 0 1.4rem 1.4rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .phase.open .phase-body { display: block; }
+
+  .phase-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.65;
+    padding: 1rem 0 1rem;
+  }
+
+  /* Tasks */
+  .task-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .task:hover { border-color: var(--border); }
+
+  .task.done {
+    background: rgba(34,197,94,0.05);
+    border-color: rgba(34,197,94,0.2);
+  }
+
+  .task-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-size: 0.65rem;
+  }
+
+  .task.done .task-check {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+  }
+
+  .task-content { flex: 1; }
+
+  .task-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .task.done .task-title {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .task-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    line-height: 1.45;
+  }
+
+  .task-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .tag-hw { background: rgba(124,58,237,0.15); color: #a78bfa; border: 1px solid rgba(124,58,237,0.25); }
+  .tag-sw { background: rgba(0,229,255,0.08); color: var(--accent); border: 1px solid rgba(0,229,255,0.2); }
+  .tag-theory { background: rgba(255,107,53,0.1); color: #fb923c; border: 1px solid rgba(255,107,53,0.2); }
+  .tag-build { background: rgba(34,197,94,0.08); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+  .tag-kit { background: rgba(245,158,11,0.1); color: var(--kit); border: 1px solid rgba(245,158,11,0.25); }
+
+  /* Milestone badge */
+  .milestone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.2);
+    border-radius: 6px;
+    padding: 0.35rem 0.7rem;
+    margin-top: 1rem;
+  }
+
+  /* Kit card */
+  .kit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .kit-card {
+    background: var(--surface2);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .kit-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .kit-price {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--kit);
+    margin-bottom: 0.5rem;
+  }
+
+  .kit-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .kit-teaches {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #a78bfa;
+  }
+
+  .kit-links {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .kit-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+
+  .kit-link.buy {
+    background: rgba(245,158,11,0.15);
+    color: var(--kit);
+    border: 1px solid rgba(245,158,11,0.35);
+  }
+
+  .kit-link.buy:hover {
+    background: rgba(245,158,11,0.28);
+  }
+
+  .kit-link.docs {
+    background: rgba(0,229,255,0.08);
+    color: var(--accent);
+    border: 1px solid rgba(0,229,255,0.25);
+  }
+
+  .kit-link.docs:hover {
+    background: rgba(0,229,255,0.18);
+  }
+
+  /* Reset btn */
+  .reset-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { border-color: var(--muted); color: var(--text); }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">// learning plan v1.0</div>
+    <h1>Build a Robot<br>for <span>Charlie</span></h1>
+    <p class="subtitle">A structured path from zero hardware experience to a working expressive companion robot — built alongside your son.</p>
+  </header>
+
+  <div class="progress-bar-wrap">
+    <span class="progress-label">OVERALL PROGRESS</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <span class="progress-pct" id="progressPct">0%</span>
+  </div>
+
+  <div id="phases"></div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset all progress</button>
+
+</div>
+
+<script>
+const data = [
+  {
+    id: "p0",
+    num: "OPTIONAL",
+    title: "Starter Kits — Jump In Structured",
+    duration: "4–8 weeks",
+    kit: true,
+    desc: "If you want hands-on experience before designing anything from scratch, these kits are excellent. Each one teaches real skills and is well-documented. Pick one and run it in parallel with or before Phase 1. They're not toys — they're legitimate learning platforms.",
+    kits: [
+      { name: "ELEGOO Arduino Starter Kit", price: "~$40", desc: "The classic entry point. Teaches microcontrollers, wiring, sensors, and C-style code through 33 guided projects.", teaches: "Microcontrollers · GPIO · Basic electronics", buyUrl: "https://us.elegoo.com/products/elegoo-uno-most-complete-starter-kit", docsUrl: "https://www.elegoo.com/blogs/arduino-projects" },
+      { name: "Freenove Robot Dog Kit", price: "~$120", desc: "A Raspberry Pi quadruped with 12 servos, camera, and Python examples. Closest thing to your end goal in a box.", teaches: "Servos · Raspberry Pi · Quadruped mechanics", buyUrl: "https://store.freenove.com/products/fnk0050", docsUrl: "https://github.com/Freenove/Freenove_Robot_Dog_Kit_for_Raspberry_Pi" },
+      { name: "PiCar-X by SunFounder", price: "~$150", desc: "Wheeled robot with camera, ultrasonic sensor, and line tracking. Excellent Python tutorials and active community.", teaches: "Sensor integration · Motor control · Computer vision basics", buyUrl: "https://www.sunfounder.com/products/picar-x", docsUrl: "https://docs.sunfounder.com/projects/picar-x-v20/en/latest/" },
+      { name: "Poppy Ergo Jr", price: "~$200", desc: "A 3D-printed 6-DOF arm using Dynamixel servos. Teaches multi-joint control and the Poppy robotics ecosystem.", teaches: "Multi-joint control · Kinematics · Dynamixel servos", buyUrl: "https://www.generationrobots.com/en/328-poppy-ergo-jr-robot", docsUrl: "https://docs.poppy-project.org/en/getting-started/" },
+    ]
+  },
+  {
+    id: "p1",
+    num: "PHASE 01",
+    title: "Physical Computing Foundations",
+    duration: "4–6 weeks",
+    desc: "Bridge the gap between software and hardware. The goal is to get comfortable with the physical layer — GPIO, wiring, power, and sensors — using Python you already know. Expect to break things. That's the curriculum.",
+    tasks: [
+      { id: "t1", title: "Set up Raspberry Pi 5 headless", sub: "Install Raspberry Pi OS, enable SSH, connect from your laptop. No monitor needed.", tag: "hw" },
+      { id: "t2", title: "Blink an LED with Python", sub: "Classic first milestone. Means your Pi runs, GPIO works, and you've closed the software → physical loop.", tag: "hw" },
+      { id: "t3", title: "Learn breadboarding basics", sub: "Watch Paul McWhorter's Raspberry Pi GPIO series on YouTube. Best free resource for this.", tag: "hw" },
+      { id: "t4", title: "Wire up an HC-SR04 distance sensor", sub: "Read a distance value in Python. Understand I2C/GPIO protocols at a basic level.", tag: "hw" },
+      { id: "t5", title: "Control a servo motor with PWM", sub: "Move a servo to specific angles via Python. This is the atomic unit of all robot movement.", tag: "hw" },
+      { id: "t6", title: "Add a small speaker + audio output", sub: "Play a sound file from Python. Use pygame or simpleaudio. Confirms your audio pipeline.", tag: "sw" },
+    ],
+    milestone: "🔧 Milestone: sensor detects your hand → servo moves → speaker beeps"
+  },
+  {
+    id: "p2",
+    num: "PHASE 02",
+    title: "Motion & Chassis",
+    duration: "4–6 weeks",
+    desc: "Get something moving autonomously. A wheeled differential drive base is the right starting point — simple to build, easy to debug, and directly applicable to the companion robot. You'll write your first real control loop here.",
+    tasks: [
+      { id: "t7", title: "Assemble 2WD chassis kit", sub: "Mount motors, wire to L298N driver, connect to Pi. Takes an afternoon.", tag: "build" },
+      { id: "t8", title: "Write basic drive commands in Python", sub: "Forward, reverse, turn left, turn right. PWM duty cycle controls speed.", tag: "sw" },
+      { id: "t9", title: "Learn PID control conceptually", sub: "Read Brian Douglas's PID intro. Your applied math background makes this click fast.", tag: "theory" },
+      { id: "t10", title: "Implement simple obstacle avoidance", sub: "HC-SR04 → stop and turn when object detected. Your first autonomous behavior.", tag: "sw" },
+      { id: "t11", title: "Understand power management", sub: "LiPo batteries, buck converters, safe wiring. Boring but critical — wrong voltage kills hardware.", tag: "hw" },
+      { id: "t12", title: "Add encoders or basic dead-reckoning", sub: "Track approximate robot position. Intro to state estimation — where your math starts being an asset.", tag: "theory" },
+    ],
+    milestone: "🚗 Milestone: robot drives around a room without hitting walls"
+  },
+  {
+    id: "p3",
+    num: "PHASE 03",
+    title: "Expressive Face & Personality",
+    duration: "6–8 weeks",
+    desc: "This is the phase Charlie cares about. Add a face display, animate it, and give the robot a voice. By the end of this phase you have something that genuinely feels alive to a 4-year-old. This is the biggest payoff phase relative to effort.",
+    tasks: [
+      { id: "t13", title: "Mount Waveshare round LCD display", sub: "Wire via SPI, install drivers, get Python drawing on screen using Pillow or pygame.", tag: "hw" },
+      { id: "t14", title: "Build a face expression library", sub: "Create 5–8 SVG or bitmap faces: happy, curious, sleepy, surprised, thinking. Animate between them.", tag: "sw" },
+      { id: "t15", title: "Trigger expressions from sensor input", sub: "Distance sensor → face changes when Charlie approaches. This moment will be magic for him.", tag: "sw" },
+      { id: "t16", title: "Add a USB microphone", sub: "Capture audio in Python. Test with basic voice activity detection (VAD) so it knows when someone is talking.", tag: "hw" },
+      { id: "t17", title: "Connect to a voice/LLM API", sub: "OpenAI Realtime API or Whisper + GPT-4o-mini. Give it a simple personality prompt tuned for a 4-year-old.", tag: "sw" },
+      { id: "t18", title: "Sync face to speech output", sub: "Animate mouth while it talks. Simple talking face loop — doesn't need to be perfect to be charming.", tag: "sw" },
+    ],
+    milestone: "🤖 Milestone: Charlie says 'hi' → robot's face lights up and responds by name"
+  },
+  {
+    id: "p4",
+    num: "PHASE 04",
+    title: "Integration & Robot OS",
+    duration: "8–12 weeks",
+    desc: "Tie everything together into a cohesive system and introduce ROS 2 — the standard framework for serious robotics. This is where your skills compound. ROS 2 handles communication between subsystems, and your Python background maps directly to it.",
+    tasks: [
+      { id: "t19", title: "Install ROS 2 Humble on Pi", sub: "Follow the official docs. Takes patience. Worth it — ROS 2 is the lingua franca of robotics.", tag: "sw" },
+      { id: "t20", title: "Learn ROS 2 core concepts", sub: "Nodes, topics, publishers, subscribers. Think of it like an event-driven microservices architecture.", tag: "theory" },
+      { id: "t21", title: "Refactor drive code into a ROS 2 node", sub: "Motor controller becomes a subscriber to /cmd_vel. Standard pattern used everywhere.", tag: "sw" },
+      { id: "t22", title: "Refactor face/voice into ROS 2 nodes", sub: "Each subsystem is now a node. They communicate via topics. Much cleaner architecture.", tag: "sw" },
+      { id: "t23", title: "Add a camera + basic computer vision", sub: "OpenCV face detection so it can find and track Charlie in the room. Use Pi Camera Module 3.", tag: "sw" },
+      { id: "t24", title: "Build a behavior state machine", sub: "Idle → curious → engaged → talking states. SMACH or simple Python FSM. Gives it coherent personality.", tag: "sw" },
+    ],
+    milestone: "🧠 Milestone: robot notices Charlie enter the room, turns toward him, and says hello"
+  },
+  {
+    id: "p5",
+    num: "PHASE 05",
+    title: "Upgrades & Growing with Charlie",
+    duration: "ongoing",
+    desc: "By the time you reach this phase, Charlie will be 5–6 and starting to understand what the robot is. These upgrades extend capability and — critically — start involving him in the build. This is where the project becomes his too.",
+    tasks: [
+      { id: "t25", title: "Add expressive arms (optional)", sub: "Simple 2-DOF arms with servo wrists. More personality, not complex. InMoov arm files are a good reference.", tag: "build" },
+      { id: "t26", title: "Give Charlie simple controls", sub: "Build a basic app (you can do this) with big buttons: 'make robot dance', 'tell a joke', 'come here'.", tag: "sw" },
+      { id: "t27", title: "Introduce Charlie to Scratch robotics", sub: "Scratch has GPIO extensions. He can program simple behaviors at age 6–7 without writing code.", tag: "sw" },
+      { id: "t28", title: "Explore localization & mapping (SLAM)", sub: "LiDAR + ROS 2 Nav2. Robot builds a map of your home and navigates autonomously. Advanced but achievable.", tag: "theory" },
+      { id: "t29", title: "Upgrade to a more powerful compute module", sub: "Jetson Orin Nano if you want local AI inference — vision, voice, all on-device with no API costs.", tag: "hw" },
+      { id: "t30", title: "Document and share the build", sub: "Write it up on Hackaday or Instructables. Good for you, good for the community, and Charlie can show friends.", tag: "build" },
+    ],
+    milestone: "👦 Milestone: Charlie shows the robot to his friends and explains how it works"
+  }
+];
+
+const STORAGE_KEY = 'robotics_plan_v1';
+
+function loadDone() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+
+function saveDone(done) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(done)); } catch {}
+}
+
+let done = loadDone();
+
+function allTaskIds() {
+  return data.flatMap(p => (p.tasks || []).map(t => t.id));
+}
+
+function updateProgress() {
+  const ids = allTaskIds();
+  const count = ids.filter(id => done[id]).length;
+  const pct = ids.length ? Math.round((count / ids.length) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function tagHTML(tag) {
+  const map = { hw: ['tag-hw','HW'], sw: ['tag-sw','SW'], theory: ['tag-theory','THEORY'], build: ['tag-build','BUILD'], kit: ['tag-kit','KIT'] };
+  const [cls, label] = map[tag] || ['tag-sw', tag.toUpperCase()];
+  return `<span class="task-tag ${cls}">${label}</span>`;
+}
+
+function renderPhases() {
+  const container = document.getElementById('phases');
+
+  data.forEach(phase => {
+    const el = document.createElement('div');
+    el.className = 'phase' + (phase.kit ? ' kit-phase' : '');
+    el.id = phase.id;
+
+    let bodyHTML = `<p class="phase-desc">${phase.desc}</p>`;
+
+    if (phase.kits) {
+      bodyHTML += `<div class="kit-grid">`;
+      phase.kits.forEach(k => {
+        bodyHTML += `
+          <div class="kit-card">
+            <div class="kit-name">${k.name}</div>
+            <div class="kit-price">${k.price}</div>
+            <div class="kit-desc">${k.desc}</div>
+            <div class="kit-teaches">${k.teaches}</div>
+            <div class="kit-links">
+              <a class="kit-link buy" href="${k.buyUrl}" target="_blank" rel="noopener">Buy →</a>
+              <a class="kit-link docs" href="${k.docsUrl}" target="_blank" rel="noopener">Docs / Learn →</a>
+            </div>
+          </div>`;
+      });
+      bodyHTML += `</div>`;
+    }
+
+    if (phase.tasks) {
+      bodyHTML += `<div class="task-list">`;
+      phase.tasks.forEach(t => {
+        const isDone = !!done[t.id];
+        bodyHTML += `
+          <div class="task ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="toggleTask('${t.id}')">
+            <div class="task-check">${isDone ? '✓' : ''}</div>
+            <div class="task-content">
+              <div class="task-title">${t.title}</div>
+              <div class="task-sub">${t.sub}</div>
+            </div>
+            ${tagHTML(t.tag)}
+          </div>`;
+      });
+      bodyHTML += `</div>`;
+    }
+
+    if (phase.milestone) {
+      bodyHTML += `<div class="milestone">${phase.milestone}</div>`;
+    }
+
+    el.innerHTML = `
+      <div class="phase-header" onclick="togglePhase('${phase.id}')">
+        <span class="phase-num">${phase.num}</span>
+        <span class="phase-title">${phase.title}</span>
+        <span class="phase-meta">${phase.duration}</span>
+        <span class="phase-chevron">▶</span>
+      </div>
+      <div class="phase-body">${bodyHTML}</div>`;
+
+    container.appendChild(el);
+  });
+
+  updateProgress();
+}
+
+function togglePhase(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+function toggleTask(id) {
+  done[id] = !done[id];
+  saveDone(done);
+  // re-render task
+  const taskEl = document.querySelector(`[data-id="${id}"]`);
+  if (taskEl) {
+    taskEl.classList.toggle('done', done[id]);
+    taskEl.querySelector('.task-check').textContent = done[id] ? '✓' : '';
+  }
+  updateProgress();
+}
+
+function resetAll() {
+  if (!confirm('Reset all progress?')) return;
+  done = {};
+  saveDone(done);
+  document.querySelectorAll('.task').forEach(t => {
+    t.classList.remove('done');
+    t.querySelector('.task-check').textContent = '';
+  });
+  updateProgress();
+}
+
+renderPhases();
+// Open first phase by default
+document.getElementById(data[0].id).classList.add('open');
+</script>
+</body>
+</html>
