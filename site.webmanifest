@@ -7,6 +7,12 @@
   "theme_color": "#0d0f14",
   "icons": [
     {
+      "src": "assets/robot-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "assets/robot-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
