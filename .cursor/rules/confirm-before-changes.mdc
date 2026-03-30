@@ -1,0 +1,26 @@
+---
+description: Require explicit approval before applying changes
+alwaysApply: true
+---
+
+# Confirm before modifying the repo
+
+## Default behavior
+
+Before making **any** change that modifies the repository (creating/editing/deleting files, moving/renaming files, installing deps, running commands that write), do the following:
+
+1. Provide a **succinct summary** of the intended changes (max 5 bullets, one line each).
+2. Ask for explicit approval: user must reply with a clear go-ahead (e.g. "yes", "approved", "do it").
+3. Do **not** apply changes until approval is received.
+
+## Allowed without approval
+
+- Reading files
+- Searching
+- Explaining options / plans
+- Running read-only commands (`git status`, `git diff`, etc.)
+
+## If changes are already present
+
+- If the working tree already has modifications, do **not** try to “fix” them automatically.
+- First summarize what is modified/untracked and ask how the user wants to proceed (keep, revert, or move to a branch).
